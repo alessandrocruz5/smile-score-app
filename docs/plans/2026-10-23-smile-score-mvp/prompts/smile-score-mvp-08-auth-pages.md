@@ -10,7 +10,7 @@ depends_on: [07]
 parallel_group:
 files:
   create: [apps/web/src/lib/validation.ts, "apps/web/src/app/(auth)/login/page.tsx", "apps/web/src/app/(auth)/register/page.tsx", apps/web/tests/validation.test.ts, "apps/web/src/components/ui/* (shadcn add)"]
-  modify: [apps/web/package.json]
+  modify: [apps/web/package.json, apps/web/pnpm-lock.yaml]
   delete: []
 ---
 # 08 · Login and register pages + auth zod schemas

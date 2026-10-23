@@ -6,8 +6,8 @@ unit:
 status: todo
 model: sonnet
 effort: medium
-depends_on: []
-parallel_group: A
+depends_on: [01]
+parallel_group:
 files:
   create: ["apps/web/** (create-next-app + shadcn init output)", apps/web/.env.example, apps/web/.prettierrc, apps/web/vitest.config.ts, apps/web/drizzle.config.ts, apps/web/src/lib/db/index.ts, apps/web/src/lib/db/schema.ts, apps/web/src/app/api/health/route.ts]
   modify: [apps/web/package.json, apps/web/.gitignore, apps/web/src/app/page.tsx, apps/web/eslint.config.mjs]
@@ -21,7 +21,8 @@ Scaffold `apps/web` with create-next-app and shadcn/ui, add the tooling scripts,
 Neon.
 
 ## Context
-- Repo root: `/home/apa/Code/smile-score-app`. Spec: PLAN.md §3, §4, §8, §9. The decided web stack is Next.js 16
+- Repo root: `/home/apa/Code/smile-score-app`. Prompt 01 has already created the root `.gitignore` and
+  `docker-compose.yml` (service `db`: postgres:16, user/password `postgres`, db `smile`, port 5432). Spec: PLAN.md §3, §4, §8, §9. The decided web stack is Next.js 16
   (App Router, TS), pnpm, Drizzle ORM + drizzle-kit, `pg`, zod, Tailwind + shadcn/ui, Vitest, ESLint + Prettier.
   Don't add anything else in this prompt.
 - **VERIFY the flags** with `pnpm create next-app@latest --help`, then run it non-interactively from the repo root:
@@ -83,5 +84,5 @@ cd /home/apa/Code/smile-score-app && docker compose up -d db
 cd apps/web && cp -n .env.example .env.local
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 (pnpm start & sleep 4; curl -sf localhost:3000/api/health; kill %1)   # {"status":"ok"}
-git -C .. check-ignore -q apps/web/.env.example && echo "EXAMPLE IGNORED: fix" || echo ok
+git -C /home/apa/Code/smile-score-app check-ignore -q apps/web/.env.example && echo "EXAMPLE IGNORED: fix" || echo ok
 ```

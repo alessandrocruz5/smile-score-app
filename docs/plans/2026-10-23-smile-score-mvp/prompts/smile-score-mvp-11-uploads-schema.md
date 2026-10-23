@@ -57,7 +57,7 @@ contract), the upload error codes and their friendly copy.
   export type Components = z.infer<...>; export type Overlay = z.infer<...>; export type ScorerResponse = z.infer<...>;
 
   export const uploadErrorCodes = ["no_face", "multiple_faces", "unsupported_image", "too_large",
-    "scorer_unavailable", "upload_failed", "unauthorized"] as const;
+    "scorer_unavailable", "upload_failed", "unauthorized", "consent_required"] as const;
   export type UploadErrorCode = (typeof uploadErrorCodes)[number];
   export const uploadErrorMessages: Record<UploadErrorCode, string> = {
     no_face: "We couldn't find a face. Try a well-lit, front-facing photo.",
@@ -67,10 +67,12 @@ contract), the upload error codes and their friendly copy.
     scorer_unavailable: "Scoring is temporarily unavailable. Please try again in a minute.",
     upload_failed: "Something went wrong saving your photo. Please try again.",
     unauthorized: "Your session has expired. Please log in again.",
+    consent_required: "Please tick the box to agree to how your photo is stored.",
   };
   export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
   export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;            // server, after client downscale
   export const MAX_RAW_FILE_BYTES = 25 * 1024 * 1024;         // client, before decoding
+  export const PHOTO_RETENTION_DAYS = 30;                      // purge job (18) + consent text (15) share this
   ```
   Comment the coupling: `scorerResponseSchema` must match `apps/scorer/app/schemas.py`.
 - Then run `pnpm db:generate` (it creates `drizzle/0001_*.sql`) and `pnpm db:migrate`.

@@ -10,7 +10,7 @@ depends_on: [03]
 parallel_group:
 files:
   create: [apps/scorer/app/landmarker.py, apps/scorer/app/overlay.py, apps/scorer/tests/test_overlay.py]
-  modify: [apps/scorer/app/main.py]
+  modify: [apps/scorer/app/main.py, apps/scorer/tests/test_health.py]
   delete: []
 ---
 # 04 · Landmarker (load once, lock) + overlay segments
@@ -23,8 +23,10 @@ FastAPI lifespan and make `/health` report the real `model_loaded`.
 ## Context
 - Repo: `/home/apa/Code/smile-score-app/apps/scorer`, venv `.venv`, model at `models/face_landmarker.task`
   (from prompt 01). Spec: PLAN.md §6.2, §6.3.
-- **VERIFY** against the current MediaPipe Python Face Landmarker guide (Tasks API). Check the option names and the
-  location of the connection constants in the installed package (`python -c "from
+- **VERIFY against the installed mediapipe version** (pinned in `requirements.txt` by prompt 01; it may be the
+  1.x major, released 2026-07-27, while PLAN.md and the shape below were written for 0.10.x). Read the current
+  MediaPipe Python Face Landmarker guide (Tasks API), then check the option names and the location of the
+  connection constants in the installed package (`python -c "from
   mediapipe.tasks.python.vision import face_landmarker as f; print(dir(f))"`). The expected shape:
   ```python
   from mediapipe.tasks import python as mp_python
@@ -38,8 +40,12 @@ FastAPI lifespan and make `/health` report the real `model_loaded`.
   landmarker = vision.FaceLandmarker.create_from_options(opts)
   ```
   The connections are expected at `vision.FaceLandmarksConnections.FACE_LANDMARKS_LIPS`, `..._LEFT_EYE`,
-  `..._RIGHT_EYE` and `..._FACE_OVAL`, each a list of `Connection(start, end)`. If they aren't in the installed
-  version, stop and report. Don't hand-copy index lists without telling me.
+  `..._RIGHT_EYE` and `..._FACE_OVAL`, each a list of `Connection(start, end)`. **If the installed 1.x moved or
+  renamed the options or these constants,** don't adapt to an undocumented API: re-pin `mediapipe==0.10.35` in
+  `requirements.txt` (the last 0.10, with the same deps), reinstall with
+  `uv pip install --python .venv -r requirements-dev.txt`, re-check, and report the switch (`requirements.txt` is
+  then an extra file you touched; say so). If 0.10.35 lacks them too, stop and report. Don't hand-copy index lists
+  without telling me.
 - `app/landmarker.py`:
   ```python
   class Landmarker:
@@ -70,12 +76,12 @@ FastAPI lifespan and make `/health` report the real `model_loaded`.
   out-of-range values) and assert the keys, the segment arity (4), the clamping, the bbox math, and that the segment
   counts equal the lengths of the connection constants.
 - `tests/conftest.py` exists (it sets `SCORER_API_KEY`). `tests/test_health.py` now triggers the lifespan when you
-  use `with TestClient(app) as c:`. Update it **only if needed**: skip it with `pytest.mark.skipif` when
-  `config.MODEL_PATH` doesn't exist, and assert `model_loaded is True` otherwise. That file is outside `files`,
-  so if you change it, say so.
+  use `with TestClient(app) as c:`. Update it: when `config.MODEL_PATH` exists, use `with TestClient(app) as c:`
+  and assert `model_loaded is True`. Otherwise keep the plain `TestClient(app)` check of `status == "ok"` (no
+  lifespan), so the health test still runs without the model.
 
 ## Do not
-- Touch files outside the `files` list, except `tests/test_health.py` as described above.
+- Touch files outside the `files` list, except `requirements.txt` for the 0.10.35 fallback above.
 - Use `mediapipe.solutions` or `drawing_utils`.
 - Load the model per request.
 - Create or switch branches, commit, or push.

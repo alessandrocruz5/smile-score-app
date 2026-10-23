@@ -61,4 +61,5 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 - In the browser: an upload lands on its results page, and the overlay lines sit on the lips, eyes and jaw of both
   a landscape photo and a **portrait phone photo**. User B opening A's `/results/{id}`, or `/results/garbage`, gets
   the 404 page.
-- Phase 3 "Done when" is then completed by M3 (prod deploy, edge cases, calibration).
+- Prompt 17 then adds the delete button to this page. Phase 3 "Done when" is completed by M3 after 17 (prod
+  deploy, edge cases, calibration).

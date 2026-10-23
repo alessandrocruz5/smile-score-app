@@ -7,7 +7,7 @@ status: todo
 model: sonnet
 effort: medium
 depends_on: []
-parallel_group: A
+parallel_group:
 files:
   create: [.gitignore, docker-compose.yml, apps/scorer/app/__init__.py, apps/scorer/app/main.py, apps/scorer/app/config.py, apps/scorer/requirements.txt, apps/scorer/requirements-dev.txt, apps/scorer/pyproject.toml, apps/scorer/Dockerfile, apps/scorer/.env.example, apps/scorer/scripts/download_model.sh, apps/scorer/tests/__init__.py, apps/scorer/tests/conftest.py, apps/scorer/tests/test_health.py]
   modify: []
@@ -26,10 +26,13 @@ is to surface the Docker and mediapipe risk on the first Render deploy.
   numpy, python-multipart. Don't add other runtime libraries.
 - Python 3.12 isn't installed system-wide. Use `uv venv --python 3.12 apps/scorer/.venv`, then
   `uv pip install --python apps/scorer/.venv -r ...`.
-- **VERIFY before pinning:** a `mediapipe` ≥ 0.10.31 wheel exists for cp312 linux x86_64 (check PyPI). Install
-  the unpinned direct deps into the fresh venv, then pin the **exact installed versions of the direct deps only**
+- **VERIFY before pinning:** mediapipe now ships **`py3-none-manylinux_2_28_x86_64`** wheels, not `cp312` ones.
+  At audit time (2026-10-23) the latest was `1.1.1`, a new major (1.0.0 shipped 2026-07-27), while PLAN.md was
+  written for 0.10.x. Check PyPI for that wheel tag. Install the unpinned direct deps into the fresh venv, then pin
+  the **exact installed versions of the direct deps only**
   in `requirements.txt`: `fastapi`, `uvicorn`, `mediapipe`, `pillow`, `numpy`, `python-multipart`. Use any numpy
-  version mediapipe accepts. `requirements-dev.txt` starts with `-r requirements.txt` and adds pinned `pytest`,
+  version mediapipe accepts. **Report the mediapipe version you pinned**: prompt 04 checks its API against
+  that version and may re-pin `mediapipe==0.10.35`. `requirements-dev.txt` starts with `-r requirements.txt` and adds pinned `pytest`,
   `ruff` and `httpx` (FastAPI's TestClient needs it).
 - **VERIFY the model URL** in the MediaPipe Face Landmarker docs (float16). The expected URL is
   `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`.
@@ -56,7 +59,9 @@ is to surface the Docker and mediapipe risk on the first Render deploy.
 - `pyproject.toml`: tool config only, with no `[project]` packaging. Include `[tool.ruff] line-length = 100`,
   `target-version = "py312"`, `[tool.ruff.lint] select = ["E","F","I","B","UP"]`, and
   `[tool.pytest.ini_options] pythonpath = ["."]`, `testpaths = ["tests"]`.
-- `tests/conftest.py`: `os.environ.setdefault("SCORER_API_KEY", "test-key")` at the top, before any app import.
+- `tests/conftest.py`: `os.environ["SCORER_API_KEY"] = "test-key"` at the top, before any app import. Use an
+  assignment, not `setdefault` **(audit)**: `docker compose run scorer` inherits `SCORER_API_KEY=dev-scorer-key`
+  from the compose env, and the tests must use the same key everywhere.
   `tests/test_health.py` checks that `TestClient(app).get("/health")` returns 200 and `status == "ok"`.
 - Root `.gitignore`: `.env`, `.env.*`, `!.env.example`, `node_modules/`, `.next/`, `apps/web/.data/`,
   `__pycache__/`, `*.pyc`, `.venv/`, `.pytest_cache/`, `.ruff_cache/`, `apps/scorer/models/`, `*.task`,

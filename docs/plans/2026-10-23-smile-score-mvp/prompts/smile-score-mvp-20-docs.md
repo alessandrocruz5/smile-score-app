@@ -1,19 +1,19 @@
 ---
 type: prompt
 plan: "[[2026-10-23-smile-score-mvp]]"
-id: 18
+id: 20
 unit:
 status: todo
 model: sonnet
 effort: medium
-depends_on: [17]
+depends_on: [19]
 parallel_group:
 files:
   create: [docs/DECISIONS.md]
   modify: [README.md]
   delete: []
 ---
-# 18 · README + DECISIONS.md
+# 20 · README + DECISIONS.md
 
 ## Task
 Write the reviewer-facing `README.md` and `docs/DECISIONS.md`. Reviewers read these first, and the owner defends
@@ -38,14 +38,30 @@ code before you state anything.
      the model-dependent tests skip without the model, and the ordering test skips without the owner fixtures.
   7. Key decisions: 5–6 bullets linking to `docs/DECISIONS.md`.
   8. Known limitations: PLAN §1.3; "the score is a calibrated heuristic, not a validated psychological measure";
-     no upload or account deletion, so deleting a user would orphan their blobs; no rate limiting beyond Better
-     Auth's defaults.
+     no account deletion (uploads can be deleted one by one; deleting a user row directly would orphan their
+     blobs); no rate limiting beyond Better Auth's defaults.
   9. **Privacy:** what is stored (the normalized JPEG with metadata stripped, the scores, the blendshapes and the
      landmark segments) and why the raw blendshapes are kept (re-tuning, DECISIONS #15). Images are private and only
-     served through the owner-checked route. Nothing is stored when scoring fails. Face geometry is
-     biometric-adjacent data, and production would add explicit consent, retention limits and deletion.
-  10. What I'd do next for production: S3, a scoring job queue, rate limiting, a liveness check, HEIC support,
-      delete or export of data.
+     served through the owner-checked route. Nothing is stored when scoring fails. Users can delete any upload
+     from its results page, which removes the image and the row (blob first, then row). Then, reading each from the
+     code:
+     - **Consent:** every upload needs the ticked checkbox, and the server rejects uploads without it
+       (`consent_required`), so each row records consent at its `created_at`.
+     - **Retention:** a daily Vercel Cron job (`/api/cron/purge`, protected by `CRON_SECRET`) deletes photos and
+       their data after `PHOTO_RETENTION_DAYS` days.
+     - **Scorer:** it processes images in memory and never logs or stores them. Say honestly that Starlette may
+       spool a part over 1 MB to a temp file it deletes at the end of the request.
+     - **Demo data:** all accounts and photos are deleted when the review period ends.
+     - **Face geometry:** the landmark segments are biometric-adjacent data ("face geometry" under BIPA; special
+       category data under GDPR Art. 9).
+  10. What I'd do next for production. Give each item one line of reasoning, framed as deliberate MVP scope
+      cuts, not regrets:
+      - S3, a scoring job queue, rate limiting, a liveness check, HEIC support
+      - **data minimization:** store only the bbox, not the landmark segments, or offer a "score only, don't keep my
+        photo" mode
+      - account deletion and data export (GDPR Arts. 17 and 20)
+      - BIPA-grade written consent and a published retention schedule
+      - per-user encryption keys, an access audit log, and pinning data to one region
 - **`docs/DECISIONS.md`:** the PLAN §11 table verbatim (rows 1–15), then these rows added from the plan's
   Decisions:
   - 16 Overlay format: segments `[x1,y1,x2,y2]` / polylines / all 478 points. MediaPipe's connection constants are
@@ -56,6 +72,18 @@ code before you state anything.
     phone photos still succeed.
   - 19 Tests written with each feature / batched in Phase 4. Every step stays verifiable.
   - 20 Scorer fails closed when the key is unset / open in dev. A misconfigured deploy can't expose `/score`.
+  - 21 Delete an upload: blob first, then row, via `DELETE /api/uploads/[id]` / row first / no delete. A failure
+    never leaves an unreachable face photo; both steps are idempotent, so a retry completes it.
+  - 22 Type allowlist on the real format (sharp `metadata().format`, Pillow `img.format`) / trust the declared
+    `Content-Type`. A GIF or SVG relabelled `image/jpeg` is rejected on both services.
+  - 23 mediapipe version: the version pinned in `apps/scorer/requirements.txt` (read it; 1.x or 0.10.35, per
+    prompts 01 and 04) / the other line. Write the reason the build actually used.
+  - 24 Consent enforced on the server (`consent=true` required by `POST /api/uploads`) / a client-only checkbox / a
+    passive notice. A checkbox alone can be bypassed with curl; the server check makes each row's `created_at` the
+    consent record.
+  - 25 Photo retention: a 30-day daily purge via Vercel Cron (blob first, then row; fails closed without
+    `CRON_SECRET`) / keep forever / manual deletion only. It limits how long face data is held, and the consent text
+    states the same constant.
   Add a one-line header: "Kept up to date as decisions change."
 
 ## Do not
@@ -66,7 +94,7 @@ code before you state anything.
 ## Done when
 ```bash
 cd /home/apa/Code/smile-score-app
-grep -c '^| [0-9]' docs/DECISIONS.md                      # 20
+grep -c '^| [0-9]' docs/DECISIONS.md                      # 25
 grep -n 'W_MOUTH' README.md && grep -n 'W_MOUTH' apps/scorer/app/config.py   # values match
 grep -nE '^## ' README.md                                 # the sections in §15 order, plus Privacy
 ```

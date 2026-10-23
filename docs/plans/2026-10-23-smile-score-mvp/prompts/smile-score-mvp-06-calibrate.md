@@ -29,6 +29,7 @@ human labels.
 - Input: `tests/fixtures/calibration/*.jpg`. Each filename starts with a 3-digit human label from 0 to 100, for
   example `050_slight.jpg`. Take an optional `argparse` positional `dir` (that default) and `--model` (default
   `config.MODEL_PATH`).
+- If no `*.jpg` match in `dir`, print `no images in <dir>` and exit 0 **before** loading the model.
 - Output: a table with columns `file`, `label`, `predicted`, `diff` (skip files with no face or 2+ faces, and
   print the reason), then `MAE: x.xx`, then `Mis-ordered pairs: k / total`. A pair (i, j) is mis-ordered when
   `label_i < label_j` and `pred_i > pred_j`. Finally, print `config.MODEL_VERSION`.

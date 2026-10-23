@@ -1,19 +1,19 @@
 ---
 type: prompt
 plan: "[[2026-10-23-smile-score-mvp]]"
-id: 17
+id: 19
 unit:
 status: todo
 model: sonnet
 effort: medium
-depends_on: [16, 06]
+depends_on: [18, 06]
 parallel_group:
 files:
   create: [.github/workflows/ci.yml]
   modify: []
   delete: []
 ---
-# 17 · GitHub Actions CI
+# 19 · GitHub Actions CI
 
 ## Task
 Add one CI workflow with two jobs. **web** runs lint, typecheck and test. **scorer** runs ruff and pytest, with the
