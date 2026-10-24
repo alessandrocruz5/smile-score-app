@@ -3,7 +3,7 @@ type: prompt
 plan: "[[2026-10-23-smile-score-mvp]]"
 id: 06
 unit:
-status: todo
+status: done
 model: haiku
 effort: low
 depends_on: [05]

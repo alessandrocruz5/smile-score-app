@@ -1,7 +1,7 @@
 ---
 type: plan
 kind: feature
-status: audited
+status: in-progress
 repo: smile-score-app
 delivery: local
 base:
@@ -363,3 +363,13 @@ safe before submission. Render and Vercel redeploy the previous commit from thei
 - 2026-10-23: re-audited (PASS-WITH-CHANGES), 5 fixes and 1 note applied: proxy redirect loop (07), Docker test
   key (01, 05), re-runnable Done-when emails (07, 14, 17, 18, E2E), lockfile declared (07, 08, 12), local secret
   check (07), native consent checkbox (15)
+- 2026-10-23: build started; rollback point `0d58a2f374511a65ce251bcd89b45fa7f28c15c9`
+- 2026-10-23: 01 done (sonnet, 0 retries): scorer skeleton; mediapipe pinned at 1.1.1 (prompt 04 must verify its API, fallback 0.10.35). `db` compose service untested (only `scorer` was started)
+- 2026-10-23: 02 done (sonnet, 0 retries): web skeleton verified on a throwaway postgres (host port 5432 is occupied on this machine, so `docker compose up -d db` fails here). Deviations: `--disable-git`; shadcn init added `components/ui/button.tsx` + `lib/utils.ts` (base-nova); esbuild approved in `apps/web/pnpm-workspace.yaml`; `force-dynamic` dropped from health route (Next 16 cacheComponents); extra `apps/web/AGENTS.md`, `README.md` from the scaffold
+- 2026-10-23: 03 done (sonnet, 0 retries): formula_v1 in scoring.py + config constants; 8 tests; ruff and pytest green
+- 2026-10-24: 04 done (sonnet, 0 retries): landmarker + overlay segments + lifespan; mediapipe 1.1.1 API matched, no fallback. Extra file with owner approval: `apps/scorer/Dockerfile` gained `libegl1 libgles2` (mediapipe 1.x needs libEGL; container crashed without it). Bbox is computed after clamping
+- 2026-10-24: 05 done (sonnet, 0 retries): /score with key check, 413/415/422 mapping, format allowlist, privacy test; 21 passed, 1 skipped (owner fixtures missing) locally and in Docker. Upload param is `Annotated[UploadFile, File()]` (ruff B008). Scorer idle memory 104 MiB, not measured under a real scored request. Multipart is parsed before `require_key`, but the 401 still beats body validation
+- 2026-10-24: 06 done (haiku, 0 retries): `apps/scorer/scripts/calibrate.py`; ruff clean, no-images path exits 0 before model load, 2+ photo table/MAE/mis-order verified on throwaway JPEGs outside the repo. `tests/fixtures/calibration/` still absent (owner supplies photos); real MAE/mis-order numbers wait on them
+- 2026-10-24: 07 gated, not dispatched: owner commits Phases 0–1 first. Owner decision for 07+: use the native
+  (linuxbrew) Postgres on localhost:5432 (`createdb smile`), not the compose `db` (port taken); swap the Done-when
+  `docker compose exec db psql … '\dt'` for `psql "$DATABASE_URL" -c '\dt'`

@@ -1,0 +1,7 @@
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import * as schema from "./schema";
+
+// The same node-postgres driver serves local Docker Postgres and Neon's pooled URL (DECISIONS #8).
+const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
+export const db = drizzle(pool, { schema });
