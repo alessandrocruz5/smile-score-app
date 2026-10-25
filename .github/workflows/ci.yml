@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: apps/web/package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  scorer:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/scorer
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/scorer/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - uses: actions/cache@v6
+        with:
+          path: apps/scorer/models
+          key: scorer-model-${{ hashFiles('apps/scorer/scripts/download_model.sh') }}
+      - run: ./scripts/download_model.sh models
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -q -rs
+        env:
+          MODEL_PATH: models/face_landmarker.task

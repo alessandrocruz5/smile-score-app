@@ -3,7 +3,7 @@ type: prompt
 plan: "[[2026-10-23-smile-score-mvp]]"
 id: 09
 unit:
-status: todo
+status: done
 model: sonnet
 effort: medium
 depends_on: [08]
