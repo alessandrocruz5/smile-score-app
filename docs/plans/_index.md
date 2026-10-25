@@ -4,4 +4,5 @@ Managed by `/plan-feature`, `/audit-plan` and `/build-unit`. Newest first. Statu
 
 | Created | Plan | Status | Risk | Prompts | Repo |
 |---|---|---|---|---|---|
+| 2026-10-25 | [[2026-10-25-upload-form-stuck-scoring]] | in-progress | low | 1 | smile-score-app |
 | 2026-10-23 | [[2026-10-23-smile-score-mvp]] | in-progress | medium | 20 | smile-score-app |

@@ -31,7 +31,7 @@ export async function scoreImage(jpeg: Buffer): Promise<ScoreResult> {
 
   let res: Response;
   try {
-    res = await fetch(`${url}/score`, {
+    res = await fetch(`${url.replace(/\/+$/, "")}/score`, {
       method: "POST",
       body: form,
       headers: { "X-Scorer-Key": key },

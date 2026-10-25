@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ export function UploadForm() {
   const [error, setError] = useState<UploadErrorCode | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const urlRef = useRef<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const selectionRef = useRef(0); // ignores a slow downscale that a newer pick has superseded
 
   function replacePreview(blob: Blob | null) {
@@ -34,12 +35,21 @@ export function UploadForm() {
     setPreviewUrl(urlRef.current);
   }
 
-  useEffect(
-    () => () => {
+  useLayoutEffect(() => {
+    const input = fileInputRef.current;
+    // cacheComponents keeps this route alive in <Activity>; hiding it runs this cleanup, so we come back to a fresh form.
+    return () => {
+      selectionRef.current += 1;
       if (urlRef.current) URL.revokeObjectURL(urlRef.current);
-    },
-    [],
-  );
+      urlRef.current = null;
+      setPreviewUrl(null);
+      setPhoto(null);
+      setConsent(false);
+      setError(null);
+      setSubmitting(false);
+      if (input) input.value = "";
+    };
+  }, []);
 
   async function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -100,6 +110,7 @@ export function UploadForm() {
         <Label htmlFor="photo">Choose a photo</Label>
         <input
           id="photo"
+          ref={fileInputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
           disabled={submitting}
